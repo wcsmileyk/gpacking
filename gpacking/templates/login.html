@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    {{ wtf.quick_form(form, action=".", form_type="horizontal", horizontal_columns=('lg', 2, 10)) }}
+</div>
+
+{% endblock %}
