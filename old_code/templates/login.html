@@ -6,7 +6,7 @@
 {% block content %}
 
 <div class="container">
-    {{ wtf.quick_form(form, action=".", form_type="horizontal", horizontal_columns=('lg', 2, 10)) }}
+    {{ wtf.quick_form(form, action=url_for('login'), form_type="horizontal", horizontal_columns=('lg', 2, 10)) }}
 </div>
 
 {% endblock %}
