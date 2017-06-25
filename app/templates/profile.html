@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block header %}
+<div class="page-header">
+    <h1>Welcome {{ current_user.username }}!</h1>
+    <ul class="nav nav-pills">
+        <li role="presentation" class="active"><a href="{{ url_for('main.user_home', username=current_user.username) }}">Inventories</a></li>
+        <li role="presentation"><a href="{{ url_for('main.add_inventory', username=current_user.username) }}">Create Inventory</a></li>
+    </ul>
+</div>
+{% endblock %}
+{% block content %}
+
+
+
+
+{% endblock %}
