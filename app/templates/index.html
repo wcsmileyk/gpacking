@@ -1,1 +1,18 @@
 {% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="jumbotron">
+        {% if current_user.is_authenticated %}
+        <h1>Welcome {{ current_user.username }}!</h1>
+        <p>Go to your profile to manager your inventories</p>
+        <a href="{{ url_for('main.profile', username=current_user.username) }}" class="btn btn-lg">Mange Inventories</a>
+        {% else %}
+        <h1>Welcome to Group Packing</h1>
+        <p>You can sign in or register now to start managing all your gear!</p>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Sign In</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-default">Register</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

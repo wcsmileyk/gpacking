@@ -26,7 +26,7 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
         {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('main.inventory') }}">Inventory</a></li>
+            <li><a href="{{ url_for('main.profile', username=current_user.username) }}">Inventories</a></li>
         {% else %}
             <li><a href="{{ url_for('auth.login') }}">Login</a></li>
             <li><a href="{{ url_for('auth.register') }}">Register</a></li>
@@ -34,7 +34,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         {% if current_user.is_authenticated %}
-          <li><a href="{{ 'auth.logout' }}">Logout</a></li>
+          <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
         {% endif %}
         <li><a href="#">About</a></li>
       </ul>
@@ -54,7 +54,8 @@
         {% endwith %}
     </div>
 {% endblock %}
-
+{% block header %}
+{% endblock %}
 {% block content %}
 {% endblock %}
 

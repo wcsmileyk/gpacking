@@ -1,16 +1,42 @@
 {% extends 'base.html' %}
 {% block header %}
-<div class="page-header">
-    <h1>Welcome {{ current_user.username }}!</h1>
-    <ul class="nav nav-pills">
-        <li role="presentation" class="active"><a href="{{ url_for('main.user_home', username=current_user.username) }}">Inventories</a></li>
-        <li role="presentation"><a href="{{ url_for('main.add_inventory', username=current_user.username) }}">Create Inventory</a></li>
-    </ul>
-</div>
+
 {% endblock %}
 {% block content %}
+<div class="container">
+    <a href="{{ url_for('main.add_inventory', username=current_user.username) }}" class="btn btn-primary">Add an Inventory</a>
 
+    <h2>Inventories</h2>
+    <ul class="list-group">
+        {% for inventory in user.inventories %}
+        <li class="list-group-item">
+            <a href="{{ url_for('main.update_inventory', username=current_user.username, inventory=inventory.name) }}">
+                {{ inventory.name }} {% if inventory.primary %}<span class="label label-primary">Primary</span>{% endif %}
+            </a>
 
+            <button type="button" class="btn btn-danger btn-xs pull-right" data-toggle="modal" data-target="#{{ inventory.name|replace(' ', '_') }}Modal">Delete</button>
 
-
+            <div class="modal  fade"  id="{{ inventory.name|replace(' ', '_') }}Modal" tabindex="-1" role="dialog" aria-labelledby="{{ inventory.name|replace(' ', '_') }}ModalLabel">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="{{ inventory.name|replace(' ', '_') }}ModalLabel">Deleting Inventory</h4>
+                  </div>
+                  <div class="modal-body">
+                    <p>Are you sure you want to delete your inventory? <br>
+                        You can't undo this&hellip;
+                    </p>
+                  </div>
+                  <div class="modal-footer center-block">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Go Back</button>
+                    <a type="button" class="btn btn-danger" href="{{ url_for('main.delete_inv', inv_id=inventory.id) }}">Delete Inventory</a>
+                  </div>
+                </div><!-- /.modal-content -->
+              </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+        </li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %}
