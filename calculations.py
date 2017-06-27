@@ -1,8 +1,49 @@
 import random
 import itertools
-import knapsack
+"""
+So the goal here is to take all shared gear, and break it down as close to the desired percentage as possible amongst
+participants (2 or more). For example:
+
+I have 10 items of shared gear of varying weights, all greater than 0. 
+
+I have 2 backpackers, and I want the more experience packer to carry 70% of the shared equipment. And the less experienced
+to carry 30% to makeup for their differing conditioning levels.
+
+I've looked at bin packing and knapsack problems and attempted a permutation calculation you'll see below. But this
+appears different because all gear must go, and I can go over the max weight. It's not capacity, but target distribution
+based.
+
+The direction my brain wants to lead in goes something like this:
+
+Fill all the bags to capacity:
+
+for item in gear:
+    for bag in bags:
+        if item + sum(bag) <= bag_target:
+            bag.append(item)
+            gear.remove(item)
+
+Now try to overfill the least possible:
+
+for item in gear:
+    abs_values = []
+    for bag in bags:
+        abs_difference = abs(bag_target - (item + bag))
+        abs_values.append((bag, abs_difference))
+    
+    goes_in = min(abs_values)
+    goes_in[0].append(item)
+    
+
+Now the part I can't think of, would be to then take each item in each bag and compare to see if it could be more
+in another bag.
 
 
+
+"""
+
+
+# I've used this to generate some dummy gear lists to work with.
 def gen_gear():
 
     rand_nums = []
@@ -12,6 +53,7 @@ def gen_gear():
     return tuple(zip(gear, rand_nums))
 
 
+# Used to break things down, since bag count should be arbitrary. Probably lots of better ways to do this
 def get_bags(gear, bag_cnt, percents):
 
     total = 0
@@ -26,31 +68,22 @@ def get_bags(gear, bag_cnt, percents):
     return bags
 
 
-def use_knapsack(gear, bags):
-    result = []
-    size = []
-    weight = []
-    gear_index = []
-    i = 0
-    for item in gear:
-        gear_index.append((item[0], i))
-        i += 1
-        size.append(item[1])
-        weight.append(item[1])
-    for bag in bags:
-        capacity = round(bags[bag]['target'])
-        best_match = knapsack.knapsack(size, weight).solve(capacity)
-        result.append(best_match)
-    return gear_index, result
+# Here I'm attempting a knapsack problem. This seems to work really well for filling one bag at a time. Though I suspect
+# it's going to result in additional bags not being able to be as efficient as possible.
+def knapsack(m_weight, weights, target, n):
+    if n == 0 or m_weight == 0:
+        return 0
+    if weights[n-1] > m_weight:
+        return knapsack(m_weight, weights, target, n-1)
+    else:
+        return min(
+            abs(target - (weights[n-1] + knapsack(m_weight - weights[n-1], weights, target, n-1))),
+            abs(target - knapsack(m_weight, weights, target, n-1))
+        )
 
 
-
-
-
-
-
-
-
+# This was a permutation attempt. It will probably have the same problems as the knapsack problem, and it too slow to
+# be realistic
 def get_best(gear, target):
 
     max_weight = round(target + (target * .10))

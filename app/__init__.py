@@ -23,7 +23,6 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'qpacking.sqlite')
     app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ECHO'] = True
     app.config['GPACKING_MAIL_SUBJECT_PREFIX'] = '[GPacking]'
     app.config['GPACKING_MAIL_SENDER'] = 'GPacking Admin <gpacking@grouppacking.com'
     #TODO: Create env variable
