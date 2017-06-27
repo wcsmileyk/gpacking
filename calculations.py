@@ -1,5 +1,6 @@
 import random
 import itertools
+import knapsack
 
 
 def gen_gear():
@@ -23,6 +24,31 @@ def get_bags(gear, bag_cnt, percents):
         bags[i] = {'weight': 0, 'target': total * percents[i], 'gear': []}
 
     return bags
+
+
+def use_knapsack(gear, bags):
+    result = []
+    size = []
+    weight = []
+    gear_index = []
+    i = 0
+    for item in gear:
+        gear_index.append((item[0], i))
+        i += 1
+        size.append(item[1])
+        weight.append(item[1])
+    for bag in bags:
+        capacity = round(bags[bag]['target'])
+        best_match = knapsack.knapsack(size, weight).solve(capacity)
+        result.append(best_match)
+    return gear_index, result
+
+
+
+
+
+
+
 
 
 def get_best(gear, target):
@@ -52,4 +78,6 @@ def get_best(gear, target):
                 best_combo = possibility
 
     return best_combo
+
+
 
