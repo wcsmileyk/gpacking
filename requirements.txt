@@ -14,7 +14,6 @@ Flask-WTF==0.14.2
 ForgeryPy==0.1
 itsdangerous==0.24
 Jinja2==2.9.6
-knapsack==0.0.2
 Mako==1.0.6
 MarkupSafe==1.0
 python-dateutil==2.6.0

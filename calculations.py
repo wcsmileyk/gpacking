@@ -1,116 +1,124 @@
 import random
 import itertools
-"""
-So the goal here is to take all shared gear, and break it down as close to the desired percentage as possible amongst
-participants (2 or more). For example:
-
-I have 10 items of shared gear of varying weights, all greater than 0. 
-
-I have 2 backpackers, and I want the more experience packer to carry 70% of the shared equipment. And the less experienced
-to carry 30% to makeup for their differing conditioning levels.
-
-I've looked at bin packing and knapsack problems and attempted a permutation calculation you'll see below. But this
-appears different because all gear must go, and I can go over the max weight. It's not capacity, but target distribution
-based.
-
-The direction my brain wants to lead in goes something like this:
-
-Fill all the bags to capacity:
-
-for item in gear:
-    for bag in bags:
-        if item + sum(bag) <= bag_target:
-            bag.append(item)
-            gear.remove(item)
-
-Now try to overfill the least possible:
-
-for item in gear:
-    abs_values = []
-    for bag in bags:
-        abs_difference = abs(bag_target - (item + bag))
-        abs_values.append((bag, abs_difference))
-    
-    goes_in = min(abs_values)
-    goes_in[0].append(item)
-    
-
-Now the part I can't think of, would be to then take each item in each bag and compare to see if it could be more
-in another bag.
-
-
-
-"""
 
 
 # I've used this to generate some dummy gear lists to work with.
-def gen_gear():
+def gen_gear(count):
 
     rand_nums = []
-    gear = ['tent', 'fly', 'poles', 'stakes', 'filter', 'firstaid', 'lighters', 'coffee', 'water', 'hammock']
-    for i in range(10):
-        rand_nums.append(random.randint(1, 999))
+    gear = [
+        'tent', 'fly', 'poles', 'stakes', 'filter', 'firstaid', 'lighters', 'coffee', 'water', 'hammock', 'another',
+        'keep going', 'whoohoo', 'thingy', 'majig', 'bag', 'food', 'camera', 'stuff',
+        'Writing', 'programs', 'or', 'programming', 'is', 'a', 'very', 'creative', 'and', 'rewarding', 'activity',
+        'You', 'can', 'write', 'programs', 'for', 'many', 'reasons', 'ranging', 'from', 'making', 'your', 'living',
+        'to', 'solving', 'a', 'difficult', 'data', 'analysis', 'problem', 'to', 'having', 'fun', 'to', 'helping',
+        'someone', 'else', 'solve', 'a', 'problem', 'This', 'book', 'assumes', 'that'
+    ]
+    for i in range(count):
+        rand_nums.append(random.randint(1, 500))
     return tuple(zip(gear, rand_nums))
 
 
 # Used to break things down, since bag count should be arbitrary. Probably lots of better ways to do this
 def get_bags(gear, bag_cnt, percents):
 
-    total = 0
-    for item in gear:
-        total += item[1]
+    total = sum([item[1] for item in gear])
 
-    bags = {}
-
-    for i in range(bag_cnt):
-        bags[i] = {'weight': 0, 'target': total * percents[i], 'gear': []}
+    bags = [{'items': [], 'target': round(total * percents[i]), 'weight': 0} for i in range(bag_cnt)]
 
     return bags
 
 
-# Here I'm attempting a knapsack problem. This seems to work really well for filling one bag at a time. Though I suspect
-# it's going to result in additional bags not being able to be as efficient as possible.
-def knapsack(m_weight, weights, target, n):
-    if n == 0 or m_weight == 0:
-        return 0
-    if weights[n-1] > m_weight:
-        return knapsack(m_weight, weights, target, n-1)
-    else:
-        return min(
-            abs(target - (weights[n-1] + knapsack(m_weight - weights[n-1], weights, target, n-1))),
-            abs(target - knapsack(m_weight, weights, target, n-1))
-        )
+def makeup_percents(count):
+    percents = [
+        [
+            [.65, .45],
+            [.8, .2],
+            [.5, .5]
+        ],
+        [
+            [.5, .3, .2],
+            [.33, .33, .33],
+            [.7, .2, .1]
+        ],
+        [
+            [.25, .25, .25, .25],
+            [.6, .2, .1, .1],
+            [.4, .3, .15, .15]
+        ],
+        [
+            [.2, .2, .2, .2, .2],
+            [.5, .2, .1, .1, .1],
+            [.4, .2, .2, .1, .1]
+        ],
+        [
+            [.166, .166, .166, .166, .166, .166],
+            [.3, .25, .2, .2, .05, .05],
+            [.2, .2, .2, .2, .1, .1]
+        ],
+        [
+            [.142, .142, .142, .142, .142, .142, .142,],
+            [.2, .2, .2, .1, .1, .1, .1],
+        ],
+        [
+            [.125, .125, .125, .125, .125, .125, .125, .125],
+            [.2, .2, .1, .1, .1, .1, .1, .1],
+        ],
+        [
+            [.11, .11, .11, .11, .11, .11, .11, .11, .11],
+            [.25, .1, .1, .1, .1, .1, .1, .1, .1]
+        ],
+        [
+            [.1, .1, .1, .1, .1, .1, .1, .1, .1, .1],
+            [.25, .25, .0625, .0625, .0625, .0625, .0625, .0625, .0625, .0625]
+        ]
+    ]
+
+    return random.choice(percents[count-2])
 
 
-# This was a permutation attempt. It will probably have the same problems as the knapsack problem, and it too slow to
-# be realistic
-def get_best(gear, target):
+def distribute(count, item_count):
+    gear = sorted(gen_gear(item_count), key=lambda wt: wt[1], reverse=True)
 
-    max_weight = round(target + (target * .10))
+    percents = sorted(makeup_percents(count))
 
-    possibilities = []
-    gear_perms = itertools.permutations(gear)
+    bags = get_bags(gear, count, percents)
 
-    for perm in gear_perms:
-        bag = []
-        current_weight = 0
-        for item in perm:
-            if item[1] + current_weight <= max_weight:
-                bag.append(item)
-                current_weight += item[1]
-        difference = abs(target - current_weight)
-        possibilities.append((difference, bag))
+    targets = [bag['target'] for bag in bags]
 
-    best_combo = ()
+    for item in gear:
+        for i, target in enumerate(targets):
+            max_weight = target
+            if item[1] + bags[i]['weight'] <= max_weight:
+                bags[i]['items'].append(item)
+                bags[i]['weight'] += item[1]
+                break
 
-    for possibility in possibilities:
-        if len(best_combo) < 2:
-            best_combo = possibility
-        else:
-            if possibility[0] < best_combo[0]:
-                best_combo = possibility
+    return bags
 
-    return best_combo
 
+def main(iterations):
+    count = random.randint(2, 10)
+    item_count = random.randint(count * 3, 63)
+
+    results = []
+
+    while iterations > 0:
+        bags = distribute(count, item_count)
+        for bag in bags:
+            target = bag['target']
+            weight = bag['weight']
+            results.append(round(abs(target - weight) / weight, 4))
+
+        iterations -= 1
+
+    # for bag in bags:
+    #     print(bag)
+
+    return results
+
+
+if __name__ == '__main__':
+    print(main(1000))
 
 

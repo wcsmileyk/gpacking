@@ -49,7 +49,13 @@ def update_inventory(username, inventory):
     form.category.choices = [(c.id, c.name) for c in categories]
     form.type.choices = [(t.id, t.name) for t in Type.query.order_by('name')]
     if form.validate_on_submit():
-        item = Item(name=form.name.data, cat_id=form.category.data, type_id=form.type.data, weight=form.weight.data)
+        print(form.category.data)
+        item = Item(
+            name=form.name.data,
+            cat_id=form.category.data,
+            type_id=form.type.data,
+            weight=form.weight.data
+        )
         db.session.add(item)
         db.session.commit()
         inventory.items.append(item)

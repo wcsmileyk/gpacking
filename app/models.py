@@ -56,7 +56,7 @@ class Friend(db.Model):
     status = db.Column(db.Integer)
     action_user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    __table_args__ = tuple(db.UniqueConstraint('friend_one_id', 'friend_two_id', name='_friends_uc'))
+    __table_args__ = tuple(db.UniqueConstraint('requestor_id', 'requested_id', name='_friends_uc'))
 
 
 class User(UserMixin, db.Model):
@@ -72,73 +72,70 @@ class User(UserMixin, db.Model):
 
     confirmed = db.Column(db.Boolean, default=False)
 
-    friend_requested = db.relationship(
-        'Friend',
-        foreign_keys=[Friend.requested_id],
-        backref=db.backref('requested', lazy='joined'),
-        lazy='dynamic',
-        cascade='all, delete-orphan'
+    friends = db.relationship(
+        'User',
+        secondary='friends',
+        primaryjoin=(Friend.requestor_id == id),
+        secondaryjoin=(Friend.requested_id == id),
+        lazy='dynamic'
     )
 
-    friend_requestor = db.relationship(
-        'Friend',
-        foreign_keys=[Friend.requestor_id],
-        backref=db.backref('friend_requestor', lazy='joined'),
-        lazy='dynamic',
-        cascade='all, delete-orphan'
-    )
+    def friendship_requested(self, user):
+        if self.friends.filter_by(username=user.username).first() is not None \
+                or Friend.query.filter_by(requestor_id=self.id).filter_by(requested_id=user.id).first() is not None:
+            return True
 
-    def friend_status(self, user):
-        friendship = self.friend_requestor.filter_by(requested_id=user.id).first()
-        if self.requested(user):
-            if friendship.status == 0:
-                return 'pending'
-            elif friendship.status == 1:
-                return 'accepted'
-            elif friendship.status == 2:
-                return 'blocked'
-        else:
-            return None
-
-    def request_friend(self, user):
-        if self.friend_status(user) is None:
-            f = Friend(requestor_id=self.id, requested_id=user, status=0, action_user_id=user)
-            db.session.add(f)
-            db.session.commit()
-
-    def requested(self, user):
-        return self.friend_requestor.filter_by(requested_id=user.id).first() is not None
-
-    def accept(self, user):
-        friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
-        friendship.status = 1
-        friendship.action_user_id = 0
-        db.session.commit()
-
-    def deny(self, user):
-        friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
-        db.session.delete(friendship)
-        db.session.commit()
-
-    def block(self, user):
-        if self.requested(user):
-            self.friend_requestor.filter_by(requested_id=user.id).first().status = 2
-        elif self.friend_requested.filter_by(requestor_id=user.id) is not None:
-            self.friend_requested.filter_by(requestor_id=user.id).first().status = 2
-        else:
-            friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0)
-            db.session.add(friendship)
-        db.session.commit()
-
-    def remove_friend(self, user):
-        if self.requested(user):
-            friendship = self.friend_requestor.filter_by(requested_id=user.id).first()
-        elif self.friend_requested.filter_by(requestor_id=user.id) is not None:
-            friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
-        else:
-            friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0)
-        db.session.delete(friendship)
-        db.session.commit()
+    # def friend_status(self, user):
+    #     friendship = self.friends.filter(User.id==user.id).first()
+    #     if self.requested(user):
+    #         if friendship.status == 0:
+    #             return 'pending'
+    #         elif friendship.status == 1:
+    #             return 'accepted'
+    #         elif friendship.status == 2:
+    #             return 'blocked'
+    #     else:
+    #         return None
+    #
+    # def request_friend(self, user):
+    #     if self.friend_status(user) is None:
+    #         f = Friend(requestor_id=self.id, requested_id=user, status=0, action_user_id=user)
+    #         db.session.add(f)
+    #         db.session.commit()
+    #
+    # def requested(self, user):
+    #     return self.friend_requestor.filter_by(requested_id=user.id).first() is not None
+    #
+    # def accept(self, user):
+    #     friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
+    #     friendship.status = 1
+    #     friendship.action_user_id = 0
+    #     db.session.commit()
+    #
+    # def deny(self, user):
+    #     friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
+    #     db.session.delete(friendship)
+    #     db.session.commit()
+    #
+    # def block(self, user):
+    #     if self.requested(user):
+    #         self.friend_requestor.filter_by(requested_id=user.id).first().status = 2
+    #     elif self.friend_requested.filter_by(requestor_id=user.id) is not None:
+    #         self.friend_requested.filter_by(requestor_id=user.id).first().status = 2
+    #     else:
+    #         friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0)
+    #         db.session.add(friendship)
+    #     db.session.commit()
+    #
+    # def remove_friend(self, user):
+    #     if self.requested(user):
+    #         friendship = self.friend_requestor.filter_by(requested_id=user.id).first()
+    #     elif self.friend_requested.filter_by(requestor_id=user.id) is not None:
+    #         friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
+    #     else:
+    #         friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0)
+    #     db.session.delete(friendship)
+    #     db.session.commit()
 
     def confirm_token(self, expiration=3600):
         sig = Serializer(current_app.config['SECRET_KEY'], expiration)
@@ -202,8 +199,12 @@ class Item(db.Model):
     type_id = db.Column(db.Integer, db.ForeignKey('types.id'))
     weight = db.Column(db.Integer)
 
-    def __init__(self, name):
+    def __init__(self, name, cat_id, type_id, weight):
         self.name = name
+        self.cat_id = cat_id
+        self.type_id = type_id
+        self.weight = weight
+
 
     def __repr__(self):
         return '<Item %r>' % self.name
