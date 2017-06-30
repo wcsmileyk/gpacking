@@ -1,7 +1,7 @@
 from flask import render_template, redirect, request, flash, url_for
 from flask_login import login_user, logout_user, login_required
 from . import auth
-from ..models import User
+from ..models import User, Closet
 from .forms import LoginForm, RegisterForm
 from .. import db
 # from ..email import send_email
@@ -15,7 +15,7 @@ def login():
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
             flash('You logged in')
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.home', username=user.username))
         flash('Invalid Username or Password')
     return render_template('auth/login.html', form=form)
 
@@ -34,6 +34,8 @@ def register():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data, password=form.password.data)
         db.session.add(user)
+        closet = Closet(user_id=user.id)
+        db.session.add(closet)
         db.session.commit()
         # TODO: Fix email confirmation system. Low priority
         # token = user.confirm_token()

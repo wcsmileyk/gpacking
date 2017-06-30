@@ -24,19 +24,20 @@
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav">
-        {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('main.profile', username=current_user.username) }}">Inventories</a></li>
-        {% else %}
-            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-            <li><a href="{{ url_for('auth.register') }}">Register</a></li>
-        {% endif %}
-      </ul>
-      <ul class="nav navbar-nav navbar-right">
-        {% if current_user.is_authenticated %}
-          <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-        {% endif %}
+    <ul class="nav navbar-nav navbar-right">
         <li><a href="#">About</a></li>
+        {% if current_user.is_authenticated %}
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.username }} <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ url_for('main.home', username=current_user.username) }}">Home</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+              </ul>
+            </li>
+        {% else %}
+            <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+        {% endif %}
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
@@ -61,8 +62,13 @@
 
 
 {% block scripts %}
+<script type=text/javascript>
+{#TODO: Fix option population so it resets on refresh#}
+  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+</script>
 <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gpacking.js') }}"></script>
 {% endblock %}
 </body>
 </html>

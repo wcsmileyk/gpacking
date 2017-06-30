@@ -7,21 +7,27 @@ from datetime import datetime
 from sqlalchemy.ext.associationproxy import association_proxy
 
 
-inv_items = db.Table(
-    'inv_items',
+closet_items = db.Table(
+    'closet_items',
     db.Column('item_id', db.Integer, db.ForeignKey('items.id')),
-    db.Column('inv_id', db.Integer, db.ForeignKey('inventories.id'))
+    db.Column('closet_id', db.Integer, db.ForeignKey('closets.id'))
+)
+
+pl_items = db.Table(
+    'pl_items',
+    db.Column('item_id', db.Integer, db.ForeignKey('items.id')),
+    db.Column('pl_id', db.Integer, db.ForeignKey('packing_lists.id'))
 )
 
 group_assoc = db.Table(
     'groups_assoc',
-    db.Column('inv_id', db.Integer, db.ForeignKey('inventories.id')),
-    db.Column('group_id', db.Integer, db.ForeignKey('group_inventories.id'))
+    db.Column('ind_pls', db.Integer, db.ForeignKey('packing_lists.id')),
+    db.Column('group_id', db.Integer, db.ForeignKey('group_packing_lists.id'))
 )
 
 group_items = db.Table(
     'group_items',
-    db.Column('group_id', db.Integer, db.ForeignKey('group_inventories.id')),
+    db.Column('group_id', db.Integer, db.ForeignKey('group_packing_lists.id')),
     db.Column('item_id', db.Integer, db.ForeignKey('items.id'))
 )
 
@@ -53,7 +59,7 @@ class Friend(db.Model):
 
     requestor_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     requested_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    status = db.Column(db.Integer)
+    status = db.Column(db.Integer, default=0)
     action_user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     __table_args__ = tuple(db.UniqueConstraint('requestor_id', 'requested_id', name='_friends_uc'))
@@ -68,74 +74,66 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     created = db.Column(db.DateTime(), default=datetime.utcnow)
-    inventories = db.relationship('Inventory', backref='user')
+    closet = db.relationship('Closet', uselist=False, back_populates='user')
 
     confirmed = db.Column(db.Boolean, default=False)
 
-    friends = db.relationship(
-        'User',
-        secondary='friends',
-        primaryjoin=(Friend.requestor_id == id),
-        secondaryjoin=(Friend.requested_id == id),
-        lazy='dynamic'
+    friend_requested = db.relationship(
+        'Friend',
+        foreign_keys=[Friend.requestor_id],
+        backref=db.backref('requestor', lazy='joined'),
+        lazy='dynamic',
+        cascade='all, delete-orphan'
     )
 
-    def friendship_requested(self, user):
-        if self.friends.filter_by(username=user.username).first() is not None \
-                or Friend.query.filter_by(requestor_id=self.id).filter_by(requested_id=user.id).first() is not None:
-            return True
+    friend_requestor = db.relationship(
+        'Friend',
+        foreign_keys=[Friend.requested_id],
+        backref=db.backref('requested', lazy='joined'),
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
 
-    # def friend_status(self, user):
-    #     friendship = self.friends.filter(User.id==user.id).first()
-    #     if self.requested(user):
-    #         if friendship.status == 0:
-    #             return 'pending'
-    #         elif friendship.status == 1:
-    #             return 'accepted'
-    #         elif friendship.status == 2:
-    #             return 'blocked'
-    #     else:
-    #         return None
-    #
-    # def request_friend(self, user):
-    #     if self.friend_status(user) is None:
-    #         f = Friend(requestor_id=self.id, requested_id=user, status=0, action_user_id=user)
-    #         db.session.add(f)
-    #         db.session.commit()
-    #
-    # def requested(self, user):
-    #     return self.friend_requestor.filter_by(requested_id=user.id).first() is not None
-    #
-    # def accept(self, user):
-    #     friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
-    #     friendship.status = 1
-    #     friendship.action_user_id = 0
-    #     db.session.commit()
-    #
-    # def deny(self, user):
-    #     friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
-    #     db.session.delete(friendship)
-    #     db.session.commit()
-    #
-    # def block(self, user):
-    #     if self.requested(user):
-    #         self.friend_requestor.filter_by(requested_id=user.id).first().status = 2
-    #     elif self.friend_requested.filter_by(requestor_id=user.id) is not None:
-    #         self.friend_requested.filter_by(requestor_id=user.id).first().status = 2
-    #     else:
-    #         friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0)
-    #         db.session.add(friendship)
-    #     db.session.commit()
-    #
-    # def remove_friend(self, user):
-    #     if self.requested(user):
-    #         friendship = self.friend_requestor.filter_by(requested_id=user.id).first()
-    #     elif self.friend_requested.filter_by(requestor_id=user.id) is not None:
-    #         friendship = self.friend_requested.filter_by(requestor_id=user.id).first()
-    #     else:
-    #         friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0)
-    #     db.session.delete(friendship)
-    #     db.session.commit()
+    def sent_request(self, user):
+        return self.friend_requested.filter_by(requested_id=user.id).first() is not None
+
+    def received_request(self, user):
+        return self.friend_requestor.filter_by(requestor_id=user.id).first() is not None
+
+    def friend_status(self, user):
+        if self.sent_request(user):
+            friendship = self.friend_requested.filter_by(requested_id=user.id).first()
+            return friendship.status
+
+    def request_friend(self, user):
+        if self.friend_status(user) is None:
+            f = Friend(requestor_id=self.id, requested_id=user.id, status=0, action_user_id=user.id)
+            db.session.add(f)
+
+    def accept(self, user):
+        friendship = self.friend_requestor.filter_by(requestor_id=user.id).first()
+        friendship.status = 1
+        friendship.action_user_id = 0
+
+    def deny(self, user):
+        friendship = self.friend_requestor.filter_by(requestor_id=user.id).first()
+        db.session.delete(friendship)
+
+    def block(self, user):
+        if self.sent_request(user):
+            self.friend_requested.filter_by(requested_id=user.id).first().status = 2
+        elif self.received_request(user):
+            self.friend_requestor.filter_by(requestor_id=user.id).first().status = 2
+        else:
+            friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0, status=2)
+            db.session.add(friendship)
+
+    def remove_friend(self, user):
+        if self.sent_request(user):
+            friendship = self.friend_requested.filter_by(requested_id=user.id).first()
+        elif self.received_request(user):
+            friendship = self.friend_requestor.filter_by(requestor_id=user.id).first()
+        db.session.delete(friendship)
 
     def confirm_token(self, expiration=3600):
         sig = Serializer(current_app.config['SECRET_KEY'], expiration)
@@ -215,7 +213,7 @@ class Activity(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True)
-    inventories = db.relationship('Inventory', backref='activity', lazy='dynamic')
+    packing_lists = db.relationship('PackingList', backref='activity', lazy='dynamic')
 
     def __repr__(self):
         return '<Activity %r>' % self.name
@@ -249,67 +247,60 @@ class Type(db.Model):
         return '<Type %r>' % self.name
 
 
-class Inventory(db.Model):
-    __tablename__ = "inventories"
+class Closet(db.Model):
+    __tablename__ = "closets"
 
     id = db.Column(db.Integer, primary_key=True)
 
-    name = db.Column(db.String(128), index=True)
-
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
-    primary = db.Column(db.Boolean)
+    user = db.relationship('User', uselist=False, back_populates='closet')
     items = db.relationship('Item',
-                            secondary=inv_items,
-                            backref=db.backref('inventory', lazy='dynamic'),
+                            secondary=closet_items,
+                            backref=db.backref('closet', lazy='dynamic'),
                             lazy='dynamic'
                             )
 
     item_names = association_proxy('items', 'name')
 
-    __table_args__ = tuple(db.UniqueConstraint('user_id', 'name', name='_user_invname_uc'))
-
     def __repr__(self):
-        return '<Inventory %r>' % self.name
-
-    @staticmethod
-    def generate_fake(count=200):
-        from random import seed, randint
-        import forgery_py
-
-        seed()
-        user_count = User.query.count()
-        for i in range(count):
-            u = User.query.offset(randint(0, user_count - 1)).first()
-            primary = True
-            for inventory in u.inventories:
-                if inventory.primary:
-                    primary = False
-            i = Inventory(
-                name=forgery_py.lorem_ipsum.word(),
-                user_id=u.id,
-                primary=primary
-            )
-            db.session.add(i)
-            db.session.commit()
+        return '<Closet %r>' % self.id
 
 
-class GroupInv(db.Model):
-    __tablename__ = "group_inventories"
+class PackingList(db.Model):
+    __tablename__ = "packing_lists"
 
     id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String(64), index=True)
-    ind_invs = db.relationship(
-        'Inventory',
+    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
+    items = db.relationship('Item',
+                            secondary=pl_items,
+                            backref=db.backref('packing_list', lazy='dynamic'),
+                            lazy='dynamic'
+                            )
+
+    item_names = association_proxy('items', 'name')
+
+    def __repr__(self):
+        return '<Packing List %r>' % self.name
+
+
+class GroupPLs(db.Model):
+    __tablename__ = "group_packing_lists"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(64), index=True)
+    ind_pls = db.relationship(
+        'PackingList',
         secondary=group_assoc,
-        backref=db.backref('group_inv', lazy='dynamic'),
+        backref=db.backref('group_packing_list', lazy='dynamic'),
         lazy='dynamic'
     )
 
     shared_items = db.relationship(
         'Item',
         secondary=group_items,
-        backref=db.backref('group_inv', lazy='dynamic'),
+        backref=db.backref('group_packing_list', lazy='dynamic'),
         lazy='dynamic'
     )

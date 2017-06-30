@@ -1,8 +1,8 @@
 from flask import render_template, session, redirect, url_for, flash, request, jsonify
 from . import main
-from ..models import User, Inventory, Activity, Category, Type, Item
+from ..models import User, Closet, Activity, Category, Type, Item
 from flask_login import login_required, current_user
-from .forms import CreateInventory, UpdateInventory
+from .forms import CreatePackingList, UpdateCloset
 from app import db
 
 
@@ -12,44 +12,22 @@ def index():
     return render_template('index.html')
 
 
-@main.route('/profile/<username>')
+@main.route('/home/<username>')
 @login_required
-def profile(username):
+def home(username):
     user = User.query.filter_by(username=username).first()
-    return render_template('profile.html', user=user)
+    return render_template('user/home.html', user=user)
 
 
-@main.route('/add_inventory/<username>', methods=['GET', 'POST'])
+@main.route('/closet/<username>', methods=['GET', 'POST'])
 @login_required
-def add_inventory(username):
+def closet(username):
     user = User.query.filter_by(username=username).first()
-    form = CreateInventory()
-    form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
-    if form.validate_on_submit():
-        inventory = Inventory(
-            name=form.name.data,
-            user_id=user.id,
-            primary=form.primary.data,
-            activity_id=form.activity.data
-        )
-        db.session.add(inventory)
-        db.session.commit()
-        flash('%s Added to inventories' % inventory.name)
-        return redirect(url_for('main.update_inventory', username=user.username, inventory=inventory.name))
-    return render_template('add_inventory.html', user=user, form=form)
-
-
-@main.route('/update_inventory/<username>/<inventory>', methods=['GET', 'POST'])
-@login_required
-def update_inventory(username, inventory):
-    user = User.query.filter_by(username=username).first()
-    inventory = Inventory.query.filter_by(name=inventory, user_id=user.id).first()
-    form = UpdateInventory()
+    form = UpdateCloset()
     categories = Category.query.order_by('name')
     form.category.choices = [(c.id, c.name) for c in categories]
     form.type.choices = [(t.id, t.name) for t in Type.query.order_by('name')]
     if form.validate_on_submit():
-        print(form.category.data)
         item = Item(
             name=form.name.data,
             cat_id=form.category.data,
@@ -58,10 +36,57 @@ def update_inventory(username, inventory):
         )
         db.session.add(item)
         db.session.commit()
-        inventory.items.append(item)
+        user.closet.items.append(item)
+        db.session.commit()
+    return render_template('user/closet.html', user=user, form=form, categories=categories)
+
+
+@main.route('/friends/<username>')
+@login_required
+def friends(username):
+    user = User.query.filter_by(username=username).first()
+    return render_template('user/friends.html', user=user)
+
+
+@main.route('/groups/<username>')
+@login_required
+def groups(username):
+    user = User.query.filter_by(username=username).first()
+    return render_template('user/groups.html', user=user)
+
+
+@main.route('/messages/<username>')
+@login_required
+def messages(username):
+    user = User.query.filter_by(username=username).first()
+    return render_template('user/messages.html', user=user)
+
+
+@main.route('/packing_lists/<username>')
+@login_required
+def packing_lists(username):
+    user = User.query.filter_by(username=username).first()
+    return render_template('user/packing_list.html', user=user)
+
+
+@main.route('/add_inventory/<username>', methods=['GET', 'POST'])
+@login_required
+def add_packing_list(username):
+    user = User.query.filter_by(username=username).first()
+    form = CreateInventory()
+    form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
+    if form.validate_on_submit():
+        inventory = Closet(
+            name=form.name.data,
+            user_id=user.id,
+            primary=form.primary.data,
+            activity_id=form.activity.data
+        )
         db.session.add(inventory)
         db.session.commit()
-    return render_template('update_inv.html', user=user, inventory=inventory, form=form, categories=categories)
+        flash('%s Added to inventories' % inventory.name)
+        return redirect(url_for('main.update_closet', username=user.username, inventory=inventory.name))
+    return render_template('user/add_packing_list.html', user=user, form=form)
 
 
 @main.route('/create_opts')
@@ -73,7 +98,7 @@ def create_opts():
 
 @main.route('/delete_inv/<inv_id>')
 def delete_inv(inv_id):
-    inventory = Inventory.query.get(int(inv_id))
+    inventory = Closet.query.get(int(inv_id))
     db.session.delete(inventory)
     db.session.commit()
     return redirect(url_for('main.profile', username=current_user.username))
