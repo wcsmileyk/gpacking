@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="col-md-2">
+        {% block sidebar %}
+            <div class="btn-group-vertical" role="group" aria-label="...">
+                <li class="btn"><a href="{{ url_for('main.home', username=current_user.username) }}">Home</a></li>
+                <li class="btn"><a href="{{ url_for('main.closet', username=current_user.username) }}">Closet</a></li>
+                <li class="btn"><a href="{{ url_for('main.packing_lists', username=current_user.username) }}">Packing Lists</a></li>
+                <li class="btn"><a href="{{ url_for('main.groups', username=current_user.username) }}">Groups</a></li>
+                <li class="btn"><a href="{{ url_for('main.friends', username=current_user.username) }}">Friends</a></li>
+                <li class="btn"><a href="{{ url_for('main.messages', username=current_user.username) }}">Messages</a></li>
+            </div>
+        {% endblock %}
+    </div>
+    <div class="col-md-10">
+        {% block user_content %}
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}

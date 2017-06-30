@@ -10,7 +10,7 @@
     <ul class="list-group">
         {% for inventory in user.inventories %}
         <li class="list-group-item">
-            <a href="{{ url_for('main.update_inventory', username=current_user.username, inventory=inventory.name) }}">
+            <a href="{{ url_for('main.update_closet', username=current_user.username, inventory=inventory.name) }}">
                 {{ inventory.name }} {% if inventory.primary %}<span class="label label-primary">Primary</span>{% endif %}
             </a>
 
