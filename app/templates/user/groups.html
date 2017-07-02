@@ -1,0 +1,36 @@
+{% extends 'user_base.html' %}
+
+{% block user_content %}
+<div class="container">
+    <a href="{{ url_for('main.add_packing_list', username=current_user.username) }}" class="btn btn-primary">Add a packing_list</a>
+
+    <h2>Packing Lists</h2>
+    <ul class="packing_list-group">
+        {% for packing_list in user.packing_lists %}
+        <li class="packing_list-group-item">
+            <a href="{{ url_for('main.update_packing_list', username=current_user.username, packing_list=packing_list.name) }}">{{ packing_list.name }}</a>
+            <button type="button" class="btn btn-danger btn-xs pull-right" data-toggle="modal" data-target="#{{ packing_list.name|replace(' ', '_') }}Modal">Delete</button>
+
+            <div class="modal  fade"  id="{{ packing_list.name|replace(' ', '_') }}Modal" tabindex="-1" role="dialog" aria-labelledby="{{ packing_list.name|replace(' ', '_') }}ModalLabel">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="{{ packing_list.name|replace(' ', '_') }}ModalLabel">Deleting Packing List</h4>
+                  </div>
+                  <div class="modal-body">
+                    <p>Are you sure you want to delete your packing_list? <br>
+                        You can't undo this&hellip;
+                    </p>
+                  </div>
+                  <div class="modal-footer center-block">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Go Back</button>
+                    <a type="button" class="btn btn-danger" href="{{ url_for('main.delete_inv', inv_id=packing_list.id) }}">Delete</a>
+                  </div>
+                </div><!-- /.modal-content -->
+              </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+        </li>
+        {% endfor %}
+    </ul>
+</div>

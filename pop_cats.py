@@ -161,7 +161,8 @@ def create_types():
             db.session.add(item_row)
             db.session.commit()
 
-
+if __name__ == '__main__':
+    create_types()
 
 
 
