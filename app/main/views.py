@@ -1,17 +1,21 @@
 from flask import render_template, session, redirect, url_for, flash, request, jsonify
 from . import main
-from ..models import User, Closet, Activity, Category, Type, Item
+from ..models import User, Closet, Activity, Category, Type, Item, Group, PackingList
 from flask_login import login_required, current_user
-from .forms import CreatePackingList, UpdateCloset
+from .forms import CreatePackingList, AddItem, CreateGroup, FriendRequest
 from app import db
 
 
+
+
+# Index / Main route
 @main.route('/')
 @main.route('/index')
 def index():
     return render_template('index.html')
 
 
+# User Pages
 @main.route('/home/<username>')
 @login_required
 def home(username):
@@ -23,7 +27,7 @@ def home(username):
 @login_required
 def closet(username):
     user = User.query.filter_by(username=username).first()
-    form = UpdateCloset()
+    form = AddItem()
     categories = Category.query.order_by('name')
     form.category.choices = [(c.id, c.name) for c in categories]
     form.type.choices = [(t.id, t.name) for t in Type.query.order_by('name')]
@@ -41,18 +45,20 @@ def closet(username):
     return render_template('user/closet.html', user=user, form=form, categories=categories)
 
 
-@main.route('/friends/<username>')
+@main.route('/friends/<username>', methods=['GET', 'POST'])
 @login_required
 def friends(username):
     user = User.query.filter_by(username=username).first()
-    return render_template('user/friends.html', user=user)
-
-
-@main.route('/groups/<username>')
-@login_required
-def groups(username):
-    user = User.query.filter_by(username=username).first()
-    return render_template('user/groups.html', user=user)
+    form = FriendRequest()
+    if form.validate_on_submit():
+        if form.user_email.data:
+            friend = User.query.filter_by(email=form.user_email.data).first()
+        elif form.username.data:
+            friend = User.query.filter_by(username=form.username.data).first()
+        user.request_friend(friend)
+        db.session.commit()
+    user_friends = user.my_friends()
+    return render_template('user/friends.html', user=user, friends=user_friends, form=form)
 
 
 @main.route('/messages/<username>')
@@ -62,31 +68,85 @@ def messages(username):
     return render_template('user/messages.html', user=user)
 
 
-@main.route('/packing_lists/<username>')
+# Group pages
+@main.route('/groups/<username>', methods=['GET', 'POST'])
+@login_required
+def groups(username):
+    user = User.query.filter_by(username=username).first()
+    form = CreateGroup()
+    user_friends = [User.query.filter_by(id=friend.requested_id).first() for friend in user.friend_requested.all()]
+    form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
+    form.friends.choices = [(f.id, f.username) for f in user_friends if user.friend_status(f) == 1]
+    friend_count = len(form.friends.choices)
+    if form.validate_on_submit():
+        group = Group(
+            name=form.name.data,
+            activity_id=form.activity.data
+        )
+        db.session.add(group)
+        db.session.commit()
+        user.group_packing_list.append(group)
+        for friend in form.friends.data:
+            f = User.query.get(friend)
+            f.group_packing_list.append(group)
+        db.session.commit()
+    user_groups = user.group_packing_list.all()
+    return render_template('user/groups.html', user=user, groups=user_groups, form=form, row_count=friend_count)
+
+
+@main.route('/update_group/<groupname>', methods=['GET', 'POST'])
+@login_required
+def update_group(groupname):
+    group = Group.query.filter_by(name=groupname)
+    return render_template('user/update_group.html', user=user, form=form, group=group)
+
+
+# Packing Lists
+@main.route('/packing_lists/<username>', methods=['GET', 'POST'])
 @login_required
 def packing_lists(username):
     user = User.query.filter_by(username=username).first()
-    return render_template('user/packing_list.html', user=user)
-
-
-@main.route('/add_inventory/<username>', methods=['GET', 'POST'])
-@login_required
-def add_packing_list(username):
-    user = User.query.filter_by(username=username).first()
-    form = CreateInventory()
+    form = CreatePackingList()
     form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
+    form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
     if form.validate_on_submit():
-        inventory = Closet(
+        pl = PackingList(
             name=form.name.data,
-            user_id=user.id,
-            primary=form.primary.data,
-            activity_id=form.activity.data
+            activity_id=form.activity.data,
+            user_id=user.id
         )
-        db.session.add(inventory)
+        db.session.add(pl)
         db.session.commit()
-        flash('%s Added to inventories' % inventory.name)
-        return redirect(url_for('main.update_closet', username=user.username, inventory=inventory.name))
-    return render_template('user/add_packing_list.html', user=user, form=form)
+        for item in form.items.data:
+            pl.items.append(Item.query.get(item))
+        db.session.commit()
+    pls = user.packing_lists
+    return render_template('user/packing_list.html', user=user, packing_lists=pls, form=form)
+
+
+@main.route('/update_packing_list/<packing_list>', methods=['GET', 'POST'])
+@login_required
+def update_packing_list(packing_list):
+    user = User.query.filter_by(username=current_user.username).first()
+    pl = PackingList.query.filter_by(name=packing_list).first()
+    form = AddItem()
+    categories = Category.query.order_by('name')
+    form.category.choices = [(c.id, c.name) for c in categories]
+    form.type.choices = [(t.id, t.name) for t in Type.query.order_by('name')]
+    if form.validate_on_submit():
+        item = Item(
+            name=form.name.data,
+            cat_id=form.category.data,
+            type_id=form.category.data,
+            weight=form.weight.data
+        )
+        db.session.add(item)
+        db.session.commit()
+        pl.items.append(item)
+        user.closet.items.append(item)
+        db.session.commit()
+    return render_template('user/update_packing_list.html', user=user, form=form, pl=pl, categories=categories)
+
 
 
 @main.route('/create_opts')

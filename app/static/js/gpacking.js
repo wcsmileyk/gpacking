@@ -18,5 +18,6 @@ var get_cats = function() {
     return false;
 };
 
+$(document).ready(get_cats);
 $("#toggleAdd").click(toggle_add);
 $("#category").change(get_cats);

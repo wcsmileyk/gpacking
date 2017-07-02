@@ -21,7 +21,7 @@ pl_items = db.Table(
 
 group_assoc = db.Table(
     'groups_assoc',
-    db.Column('ind_pls', db.Integer, db.ForeignKey('packing_lists.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
     db.Column('group_id', db.Integer, db.ForeignKey('group_packing_lists.id'))
 )
 
@@ -60,10 +60,11 @@ class Friend(db.Model):
     requestor_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     requested_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     status = db.Column(db.Integer, default=0)
-    action_user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     __table_args__ = tuple(db.UniqueConstraint('requestor_id', 'requested_id', name='_friends_uc'))
 
+    def __repr__(self):
+        return '<Friend: %r, %r>' % (User.query.get(self.requestor_id).username, User.query.get(self.requested_id).username)
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -75,6 +76,7 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     created = db.Column(db.DateTime(), default=datetime.utcnow)
     closet = db.relationship('Closet', uselist=False, back_populates='user')
+    packing_lists = db.relationship('PackingList', backref='user')
 
     confirmed = db.Column(db.Boolean, default=False)
 
@@ -94,6 +96,15 @@ class User(UserMixin, db.Model):
         cascade='all, delete-orphan'
     )
 
+# User methods
+    def my_friends(self):
+        friends = []
+        for friend in self.friend_requested.all():
+            friends.append(User.query.get(friend.requested_id))
+        for friend in self.friend_requestor.all():
+            friends.append(User.query.get(friend.requestor_id))
+        return friends
+
     def sent_request(self, user):
         return self.friend_requested.filter_by(requested_id=user.id).first() is not None
 
@@ -107,13 +118,12 @@ class User(UserMixin, db.Model):
 
     def request_friend(self, user):
         if self.friend_status(user) is None:
-            f = Friend(requestor_id=self.id, requested_id=user.id, status=0, action_user_id=user.id)
+            f = Friend(requestor_id=self.id, requested_id=user.id, status=0)
             db.session.add(f)
 
     def accept(self, user):
         friendship = self.friend_requestor.filter_by(requestor_id=user.id).first()
         friendship.status = 1
-        friendship.action_user_id = 0
 
     def deny(self, user):
         friendship = self.friend_requestor.filter_by(requestor_id=user.id).first()
@@ -125,7 +135,7 @@ class User(UserMixin, db.Model):
         elif self.received_request(user):
             self.friend_requestor.filter_by(requestor_id=user.id).first().status = 2
         else:
-            friendship = Friend(requestor_id=self.id, requested_id=user.id, action_user_id=0, status=2)
+            friendship = Friend(requestor_id=self.id, requested_id=user.id, status=2)
             db.session.add(friendship)
 
     def remove_friend(self, user):
@@ -214,6 +224,7 @@ class Activity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True)
     packing_lists = db.relationship('PackingList', backref='activity', lazy='dynamic')
+    group_lists = db.relationship('Group', backref='activity', lazy='dynamic')
 
     def __repr__(self):
         return '<Activity %r>' % self.name
@@ -273,6 +284,7 @@ class PackingList(db.Model):
 
     name = db.Column(db.String(64), index=True)
     activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     items = db.relationship('Item',
                             secondary=pl_items,
                             backref=db.backref('packing_list', lazy='dynamic'),
@@ -285,18 +297,19 @@ class PackingList(db.Model):
         return '<Packing List %r>' % self.name
 
 
-class GroupPLs(db.Model):
+class Group(db.Model):
     __tablename__ = "group_packing_lists"
 
     id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String(64), index=True)
-    ind_pls = db.relationship(
-        'PackingList',
+    users = db.relationship(
+        'User',
         secondary=group_assoc,
         backref=db.backref('group_packing_list', lazy='dynamic'),
         lazy='dynamic'
     )
+    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
 
     shared_items = db.relationship(
         'Item',
@@ -304,3 +317,6 @@ class GroupPLs(db.Model):
         backref=db.backref('group_packing_list', lazy='dynamic'),
         lazy='dynamic'
     )
+
+    def __repr__(self):
+        return '<Group List %r>' % self.name

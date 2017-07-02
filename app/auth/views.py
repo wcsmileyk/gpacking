@@ -14,7 +14,6 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
-            flash('You logged in')
             return redirect(url_for('main.home', username=user.username))
         flash('Invalid Username or Password')
     return render_template('auth/login.html', form=form)
@@ -36,6 +35,7 @@ def register():
         db.session.add(user)
         closet = Closet(user_id=user.id)
         db.session.add(closet)
+        user.closet = closet
         db.session.commit()
         # TODO: Fix email confirmation system. Low priority
         # token = user.confirm_token()

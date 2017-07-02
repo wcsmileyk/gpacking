@@ -2,7 +2,7 @@ from app import db
 from app.models import Category, Type
 
 
-def create_types():
+def pop_cats():
     types = {
             'Packs/Bags': [
                               'Backpack',
@@ -162,7 +162,7 @@ def create_types():
             db.session.commit()
 
 if __name__ == '__main__':
-    create_types()
+    pop_cats()
 
 
 
