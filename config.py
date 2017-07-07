@@ -32,8 +32,7 @@ class TestingConfig(Config):
 
 
 class ProductionConfig(Config):
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                              'mysql+pymysql://gpacking:gpacking@localhost/gpacking-prod'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
 
 
 config = {
