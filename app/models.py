@@ -19,15 +19,21 @@ pl_items = db.Table(
     db.Column('pl_id', db.Integer, db.ForeignKey('packing_lists.id'))
 )
 
+gl_items = db.Table(
+    'gl_items',
+    db.Column('item_id', db.Integer, db.ForeignKey('items.id')),
+    db.Column('group_list_id', db.Integer, db.ForeignKey('group_lists.id'))
+)
+
 group_assoc = db.Table(
     'groups_assoc',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
-    db.Column('group_id', db.Integer, db.ForeignKey('group_packing_lists.id'))
+    db.Column('group_id', db.Integer, db.ForeignKey('groups.id'))
 )
 
 group_items = db.Table(
     'group_items',
-    db.Column('group_id', db.Integer, db.ForeignKey('group_packing_lists.id')),
+    db.Column('group_id', db.Integer, db.ForeignKey('groups.id')),
     db.Column('item_id', db.Integer, db.ForeignKey('items.id'))
 )
 
@@ -77,6 +83,7 @@ class User(UserMixin, db.Model):
     created = db.Column(db.DateTime(), default=datetime.utcnow)
     closet = db.relationship('Closet', uselist=False, back_populates='user')
     packing_lists = db.relationship('PackingList', backref='user')
+    group_lists = db.relationship('GroupList', backref='user')
 
     confirmed = db.Column(db.Boolean, default=False)
 
@@ -297,8 +304,25 @@ class PackingList(db.Model):
         return '<Packing List %r>' % self.name
 
 
+class GroupList(db.Model):
+    __tablename__ = "group_lists"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'))
+    items = db.relationship('Item',
+                            secondary=gl_items,
+                            backref=db.backref('group_lis', lazy='dynamic'),
+                            lazy='dynamic'
+                            )
+
+    def __repr__(self):
+        return '<Group List %r: %r>' % (Group.query.get(self.group_id).name, User.query.get(self.user_id).username)
+
+
 class Group(db.Model):
-    __tablename__ = "group_packing_lists"
+    __tablename__ = "groups"
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -306,7 +330,7 @@ class Group(db.Model):
     users = db.relationship(
         'User',
         secondary=group_assoc,
-        backref=db.backref('group_packing_list', lazy='dynamic'),
+        backref=db.backref('group', lazy='dynamic'),
         lazy='dynamic'
     )
     activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'))
@@ -314,9 +338,11 @@ class Group(db.Model):
     shared_items = db.relationship(
         'Item',
         secondary=group_items,
-        backref=db.backref('group_packing_list', lazy='dynamic'),
+        backref=db.backref('group', lazy='dynamic'),
         lazy='dynamic'
     )
 
+    group_pls = db.relationship('GroupList', backref='group')
+
     def __repr__(self):
-        return '<Group List %r>' % self.name
+        return '<Group %r>' % self.name

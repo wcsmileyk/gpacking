@@ -1,8 +1,8 @@
 from flask import render_template, session, redirect, url_for, flash, request, jsonify
 from . import main
-from ..models import User, Closet, Activity, Category, Type, Item, Group, PackingList
+from ..models import User, Closet, Activity, Category, Type, Item, Group, PackingList, GroupList
 from flask_login import login_required, current_user
-from .forms import CreatePackingList, AddItem, CreateGroup, FriendRequest
+from .forms import CreatePackingList, AddItem, CreateGroup, FriendRequest, UpdateGroupList
 from app import db
 
 
@@ -76,6 +76,8 @@ def groups(username):
     form = CreateGroup()
     user_friends = [User.query.filter_by(id=friend.requested_id).first() for friend in user.friend_requested.all()]
     form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
+    form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    form.shared_items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
     form.friends.choices = [(f.id, f.username) for f in user_friends if user.friend_status(f) == 1]
     friend_count = len(form.friends.choices)
     if form.validate_on_submit():
@@ -85,20 +87,78 @@ def groups(username):
         )
         db.session.add(group)
         db.session.commit()
-        user.group_packing_list.append(group)
+        group_list = GroupList(
+            group_id=group.id,
+            user_id=user.id
+        )
+        db.session.add(group_list)
+        db.session.commit()
+        user.group.append(group)
+        user.group_lists.append(group_list)
         for friend in form.friends.data:
             f = User.query.get(friend)
-            f.group_packing_list.append(group)
+            f.group.append(group)
+            gl = GroupList(user_id=f.id, group_id=group.id)
+            db.session.add(gl)
+            db.session.commit()
+            f.group_lists.append(gl)
         db.session.commit()
-    user_groups = user.group_packing_list.all()
+        for item in form.items.data:
+            group_list.items.append(Item.query.get(item))
+        for s_item in form.shared_items.data:
+            group.shared_items.append(Item.query.get(s_item))
+        db.session.commit()
+    user_groups = user.group.all()
     return render_template('user/groups.html', user=user, groups=user_groups, form=form, row_count=friend_count)
 
 
-@main.route('/update_group/<groupname>', methods=['GET', 'POST'])
+@main.route('/group/<groupname>')
 @login_required
-def update_group(groupname):
-    group = Group.query.filter_by(name=groupname)
-    return render_template('user/update_group.html', user=user, form=form, group=group)
+def manage_group(groupname):
+    user = current_user
+    group = Group.query.filter_by(name=groupname).first()
+    categories = Category.query.order_by('name')
+    return render_template('user/manage_group.html', group=group, user=user, categories=categories)
+
+
+@main.route('/group/<groupname>/<username>', methods=['GET', 'POST'])
+@login_required
+def manage_bag(groupname, username):
+    group = Group.query.filter_by(name=groupname).first()
+    user = User.query.filter_by(username=username).first()
+    group_list = GroupList.query.filter_by(group_id=group.id, user_id=user.id).first()
+    categories = Category.query.order_by('name')
+    form = UpdateGroupList()
+    form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    form.category.choices = [(c.id, c.name) for c in categories]
+    # TODO: Add validation
+    if request.method == 'POST':
+        if len(form.items.data) >= 1:
+            for item in form.items.data:
+                i = Item.query.get(item)
+                group_list.items.append(i)
+                db.session.commit()
+        else:
+            item = Item(name=form.name.data, cat_id=form.category.data, type_id=form.type.data, weight=form.weight.data)
+            db.session.add(item)
+            db.session.commit()
+            user.closet.items.append(item)
+            group_list.items.append(item)
+            db.session.commit()
+    return render_template('user/manage_bag.html', user=user, form=form, group=group, categories=categories, group_list=group_list)
+
+
+@main.route('/group/<groupname>/shared')
+@login_required
+def manage_shared(groupname):
+    form = UpdateGroupList()
+    user = current_user
+    group = Group.query.filter_by(name=groupname).first()
+    categories = Category.query.order_by('name')
+    form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    form.category.choices = [(c.id, c.name) for c in categories]
+    return render_template('user/manage_shared.html', user=user, form=form, group=group, categories=categories)
+
 
 
 # Packing Lists
@@ -162,4 +222,3 @@ def delete_inv(inv_id):
     db.session.delete(inventory)
     db.session.commit()
     return redirect(url_for('main.profile', username=current_user.username))
-

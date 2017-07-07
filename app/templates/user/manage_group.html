@@ -1,4 +1,73 @@
 {% extends 'user_base.html' %}
 
-{% block user_content %}
 
+{% block user_content %}
+<ul class="nav nav-tabs">
+    <li role="presentation" class="active"><a href="{{ url_for('main.manage_group', groupname=group.name) }}">Group Home</a></li>
+    <li role="presentation"><a href="{{ url_for('main.manage_bag', groupname=group.name, username=current_user.username) }}">Your Bag</a></li>
+    <li role="presentation"><a href="{{ url_for('main.manage_shared', groupname=group.name) }}">Shared Gear</a></li>
+</ul>
+
+{% for user in group.users.all() %}
+    {% for list in user.group_lists %}
+        {% if list.group_id == group.id %}
+            <div class="col-md-3">
+                <h2>{{ user.username }}'s Bag</h2>
+                {% for category in categories %}
+                <table class="table table-condensed table-hover table-responsive">
+                    <caption>{{ category.name }}</caption>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in list.items.all() %}
+                        {% if item.category.name == category.name  %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.type.name }}</td>
+                                <td>{{ item.weight }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% endfor %}
+                </div>
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+<div class="col-md-3">
+    <div class="row">
+        <h2>Shared Gear</h2>
+        {% for category in categories %}
+            <table class="table table-condensed table-hover table-responsive">
+                <caption>{{ category.name }}</caption>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Weight</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in group.shared_items.all() %}
+                    {% if item.category.name == category.name  %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.type.name }}</td>
+                            <td>{{ item.weight }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

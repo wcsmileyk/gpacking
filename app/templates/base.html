@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% block header %}
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
     {% block style %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
     {% endblock %}
+    {% endblock %}
 </head>
+{% block body %}
 <body>
 {% block nav %}
 <nav class="navbar navbar-default">
@@ -69,4 +72,5 @@
 <script src="{{ url_for('static', filename='js/gpacking.js') }}"></script>
 {% endblock %}
 </body>
+{% endblock %}
 </html>

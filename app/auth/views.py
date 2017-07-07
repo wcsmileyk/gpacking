@@ -40,6 +40,6 @@ def register():
         # TODO: Fix email confirmation system. Low priority
         # token = user.confirm_token()
         # send_email(user.email, 'Confirm Your Account', 'auth/email/confirm', user=user, token=token)
-        flash('Thanks for registering. You can now login')
-        return redirect(url_for('auth.login'))
+        login_user(user)
+        return redirect(url_for('main.home', username=user.username))
     return render_template('auth/register.html', form=form)
