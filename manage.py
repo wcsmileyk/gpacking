@@ -15,6 +15,7 @@ def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role)
 
 
+@manager.command()
 def deploy():
     from flask.ext.migrate import upgrade
     upgrade()
