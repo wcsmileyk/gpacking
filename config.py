@@ -22,8 +22,7 @@ class DevelopmentConfig(Config):
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-                              'mysql+pymysql://gpacking:gpacking@localhost/gpacking'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://gpacking:gpacking@localhost/gpacking'
 
 
 class TestingConfig(Config):
