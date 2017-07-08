@@ -8,6 +8,7 @@ class Config:
     GPACKING_MAIL_SUBJECT_PREFIX = '[Group Packing]'
     GPACKING_MAIL_SENDER = 'Group Packing Admin <admin@grouppacking.com>'
     GPACKING_ADMIN = os.environ.get('GPACKING_ADMIN')
+    SSL_DISABLE = True
 
     @staticmethod
     def init_app(app):
@@ -36,6 +37,9 @@ class ProductionConfig(Config):
 
 
 class HerokuConfig(ProductionConfig):
+
+    SSL_DISABLE = False
+
     @classmethod
     def init_app(cls, app):
         ProductionConfig.init_app(app)
@@ -45,6 +49,9 @@ class HerokuConfig(ProductionConfig):
         file_handler = StreamHandler()
         file_handler.setLevel(logging.WARNING)
         app.logger.addHandler(file_handler)
+
+        from werkzeug.contrib.fixers import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app)
 
 config = {
     'development': DevelopmentConfig,
