@@ -1,3 +1,46 @@
-.index {
-    background: url(../img/austin-ban-986.jpg)
+body {
+    font-family: 'Nunito', sans-serif;
+    background-color: rgba(209, 239, 249, 0.5)
+    /*background-color:  rgba(174, 168, 82, 0.5)*/
 }
+
+
+.index {
+    background: url(../img/background.jpg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: white;
+    background-size: cover;
+
+}
+
+.navbar {
+    background-color: transparent;
+    border-color: transparent;
+    font-family: 'Rubik', sans-serif;
+}
+
+.jumbotron {
+    background: transparent;
+    color: #2F4F4F
+}
+
+.jumbotron .btn-primary {
+    background: #3E9162;
+}
+
+.top-buffer {
+    margin-top: 150px;
+}
+
+.jumbotron .btn {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.table {
+    background-color: rgba(253, 253, 253, 0.6);
+    border-radius: 5px;
+}
+

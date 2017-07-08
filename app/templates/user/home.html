@@ -1,11 +1,9 @@
 {% extends 'user_base.html' %}
 
 {% block user_content %}
-    <div class="jumbotron">
-        <h1>Manage your equipment here</h1>
-        <p>You can add equipment to your closet</p>
+    <div class="jumbotron col-md-10">
+        <h1>Manage Your Gear</h1>
         <a class="btn btn-lg btn-primary" href="{{ url_for('main.closet', username=current_user.username) }}">Manage Closet</a>
-        <p>Or create packing lists</p>
-        <a class="btn btn-lg btn-primary" href="{{ url_for('main.packing_lists', username=current_user.username) }}">Create Packing List</a>
+        <a class="btn btn-lg btn-default" href="{{ url_for('main.packing_lists', username=current_user.username) }}">Create Packing List</a>
     </div>
 {% endblock %}

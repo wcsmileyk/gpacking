@@ -1,7 +1,13 @@
 {% extends 'base.html' %}
 
+{%  block body %}
+<body class="index">
+{% block nav %}
+    {{ super() }}
+{% endblock %}
 {% block content %}
 <div class="container">
+    <div class="col-md-6 top-buffer pull-right">
     <form class="form-horizontal" action="" method="post">
        {% if form.errors %}
       <div class="alert alert-danger">{{ form.errors }}</div>
@@ -37,5 +43,7 @@
         </div>
       </div>
     </form>
+    </div>
 </div>
+{% endblock %}
 {% endblock %}
