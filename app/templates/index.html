@@ -1,18 +1,30 @@
 {% extends 'base.html' %}
 
+{% block body %}
+    <body class="index">
+
+{% block nav %}
+    {{ super() }}
+{% endblock %}
+
 {% block content %}
 <div class="container">
-    <div class="jumbotron">
+    <div class="col-md-4 jumbotron pull-right">
         {% if current_user.is_authenticated %}
         <h1>Welcome {{ current_user.username }}!</h1>
         <p>Go to your profile to manager your gear</p>
         <a href="{{ url_for('main.home', username=current_user.username) }}" class="btn btn-lg">Home</a>
         {% else %}
-        <h1>Welcome to Group Packing</h1>
-        <p>You can sign in or register now to start managing all your gear!</p>
-        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Sign In</a>
-        <a href="{{ url_for('auth.register') }}" class="btn btn-default">Register</a>
+        <h1>Welcome!</h1>
+        <p>Register now to manage gear for your next big trip</p>
+        <div class="text-center">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-primary pull-left">Register</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-lg btn-default pull-right">Sign In</a>
+        </div>
         {% endif %}
     </div>
 </div>
 {% endblock %}
+
+{% endblock %}
+</body>
