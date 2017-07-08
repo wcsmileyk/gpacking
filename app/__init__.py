@@ -18,6 +18,10 @@ def create_app(config_name):
 
     app.config.from_object(config[config_name])
 
+    if not app.debug and not app.testing and not app.config['SSL_DISABLE']:
+        from flask_sslify import SSLify
+        sslify = SSLify(app)
+
     login_manager.init_app(app)
     mail.init_app(app)
     mail.init_app(app)
