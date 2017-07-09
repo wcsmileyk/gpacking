@@ -19,9 +19,9 @@ class CreatePackingList(FlaskForm):
 class CreateGroup(FlaskForm):
     name = StringField('Group Name', validators=[DataRequired()])
     activity = SelectField('What activity is this for?', coerce=int)
-    friends = SelectMultipleField('Add friends', coerce=int)
-    items = SelectMultipleField('Which items are you brining?', coerce=int)
-    shared_items = SelectMultipleField('Which items are you sharing with the group?', coerce=int)
+    friends = MultipleCheckBox('Add friends', coerce=int)
+    items = MultipleCheckBox('Which items are you brining?', coerce=int)
+    shared_items = MultipleCheckBox('Which items are you sharing with the group?', coerce=int)
 
 
 class UpdateGroupList(FlaskForm):
@@ -29,7 +29,7 @@ class UpdateGroupList(FlaskForm):
     category = SelectField('Category', coerce=int)
     type = SelectField('Type', coerce=int)
     weight = IntegerField('Weight (grams)')
-    items = SelectMultipleField('Which Items?', coerce=int)
+    items = MultipleCheckBox('Which Items?', coerce=int)
 
 
 class AddItem(FlaskForm):
@@ -37,6 +37,7 @@ class AddItem(FlaskForm):
     category = SelectField('Category', coerce=int, validators=[DataRequired()])
     type = SelectField('Type', coerce=int, validators=[DataRequired()])
     weight = IntegerField('Weight (grams)')
+    items = MultipleCheckBox('Which Items are you bringing?', coerce=int)
 
 
 class FriendRequest(FlaskForm):

@@ -57,9 +57,17 @@ a[href="#addItem"] {
 
 .panel-body>ul {
     list-style-type: none;
-    columns: 2;
-    -webkit-columns: 2;
-    -moz-columns: 2;
+    columns: 100px 4;
+    -webkit-columns: 100px 4;
+    -moz-columns: 100px 4;
+}
+
+.panel-body>ul>li {
+    margin-bottom: 3px;
+}
+
+.panel {
+    margin-top: 10px;
 }
 
 /*.table {*/

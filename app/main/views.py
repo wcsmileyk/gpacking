@@ -75,11 +75,13 @@ def groups(username):
     user = User.query.filter_by(username=username).first()
     form = CreateGroup()
     user_friends = [User.query.filter_by(id=friend.requested_id).first() for friend in user.friend_requested.all()]
+    item_choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    friend_choices = [(f.id, f.username) for f in user_friends if user.friend_status(f) == 1]
     form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
-    form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
-    form.shared_items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
-    form.friends.choices = [(f.id, f.username) for f in user_friends if user.friend_status(f) == 1]
-    friend_count = len(form.friends.choices)
+    form.items.choices = item_choices
+    form.shared_items.choices = item_choices
+    form.friends.choices = friend_choices
+    friend_count = len(friend_choices)
     if form.validate_on_submit():
         group = Group(
             name=form.name.data,
@@ -109,7 +111,7 @@ def groups(username):
             group.shared_items.append(Item.query.get(s_item))
         db.session.commit()
     user_groups = user.group.all()
-    return render_template('user/groups.html', user=user, groups=user_groups, form=form, row_count=friend_count)
+    return render_template('user/groups.html', user=user, groups=user_groups, form=form, row_count=friend_count, friend_choices=friend_choices, item_choices=item_choices)
 
 
 @main.route('/group/<groupname>')
@@ -129,7 +131,8 @@ def manage_bag(groupname, username):
     group_list = GroupList.query.filter_by(group_id=group.id, user_id=user.id).first()
     categories = Category.query.order_by('name')
     form = UpdateGroupList()
-    form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    item_choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    form.items.choices = item_choices
     form.category.choices = [(c.id, c.name) for c in categories]
     # TODO: Add validation
     if request.method == 'POST':
@@ -146,7 +149,7 @@ def manage_bag(groupname, username):
             group_list.items.append(item)
             db.session.commit()
     weights = [i.weight for i in group_list.items.all()]
-    return render_template('user/manage_bag.html', user=user, form=form, group=group, categories=categories, group_list=group_list, weights=weights)
+    return render_template('user/manage_bag.html', user=user, form=form, group=group, categories=categories, group_list=group_list, weights=weights, item_choices=item_choices)
 
 
 @main.route('/group/<groupname>/shared')
@@ -170,7 +173,6 @@ def packing_lists(username):
     form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
     form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
     item_choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
-    print(form.items)
     if form.validate_on_submit():
         pl = PackingList(
             name=form.name.data,
@@ -195,20 +197,29 @@ def update_packing_list(packing_list):
     categories = Category.query.order_by('name')
     form.category.choices = [(c.id, c.name) for c in categories]
     form.type.choices = [(t.id, t.name) for t in Type.query.order_by('name')]
-    if form.validate_on_submit():
-        item = Item(
-            name=form.name.data,
-            cat_id=form.category.data,
-            type_id=form.category.data,
-            weight=form.weight.data
-        )
-        db.session.add(item)
-        db.session.commit()
-        pl.items.append(item)
-        user.closet.items.append(item)
-        db.session.commit()
+    form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    item_choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    if request.method == 'POST':
+        print(len(form.items.data))
+        if len(form.items.data) >= 1:
+            for item in form.items.data:
+                i = Item.query.get(item)
+                pl.items.append(i)
+                db.session.commit()
+        else:
+            item = Item(
+                name=form.name.data,
+                cat_id=form.category.data,
+                type_id=form.category.data,
+                weight=form.weight.data
+            )
+            db.session.add(item)
+            db.session.commit()
+            pl.items.append(item)
+            user.closet.items.append(item)
+            db.session.commit()
     weights = [i.weight for i in pl.items.all()]
-    return render_template('user/update_packing_list.html', user=user, form=form, pl=pl, categories=categories, weights=weights)
+    return render_template('user/update_packing_list.html', user=user, form=form, pl=pl, categories=categories, weights=weights, item_choices=item_choices)
 
 
 
