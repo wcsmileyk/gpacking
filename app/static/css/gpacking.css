@@ -39,8 +39,31 @@ body {
     margin-right: 10px;
 }
 
-.table {
-    background-color: rgba(253, 253, 253, 0.6);
-    border-radius: 5px;
+.well:first-of-type {
+    margin-top: 20px;
 }
+
+.well>h5 {
+    color: #777;
+}
+
+.nav-tabs {
+    margin-bottom: 10px;
+}
+
+a[href="#addItem"] {
+    margin-bottom: 10px;
+}
+
+.panel-body>ul {
+    list-style-type: none;
+    columns: 2;
+    -webkit-columns: 2;
+    -moz-columns: 2;
+}
+
+/*.table {*/
+    /*background-color: rgba(253, 253, 253, 0.6);*/
+    /*border-radius: 5px;*/
+/*}*/
 

@@ -6,14 +6,14 @@ from flask_login import current_user
 
 
 class MultipleCheckBox(SelectMultipleField):
-    widget = widgets.TableWidget()
+    widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()
 
 
 class CreatePackingList(FlaskForm):
     name = StringField('Packing List Name', validators=[DataRequired()])
     activity = SelectField('What activity is this for?', coerce=int)
-    items = SelectMultipleField('Which Items are you bringing?', coerce=int)
+    items = MultipleCheckBox('Which Items are you bringing?', coerce=int)
 
 
 class CreateGroup(FlaskForm):

@@ -12,29 +12,40 @@
     {% for list in user.group_lists %}
         {% if list.group_id == group.id %}
             <div class="col-md-3">
-                <h2>{{ user.username }}'s Bag</h2>
+                <h4>{{ user.username }}'s Bag</h4>
                 {% for category in categories %}
-                <table class="table table-condensed table-hover table-responsive">
-                    <caption>{{ category.name }}</caption>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Weight</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for item in list.items.all() %}
-                        {% if item.category.name == category.name  %}
-                            <tr>
-                                <td>{{ item.name }}</td>
-                                <td>{{ item.type.name }}</td>
-                                <td>{{ item.weight }}</td>
-                            </tr>
-                        {% endif %}
-                    {% endfor %}
-                    </tbody>
-                </table>
+                        <div class="well well-sm">
+
+                            <h5>
+                                {{ category.name }}
+                                <a href="#toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}" class="btn btn-xs btn-default" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}">
+                                    <span class="glyphicon glyphicon-menu-up"></span>
+                                </a>
+                            </h5>
+                            <div id="toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}" class="collapse in">
+                                <table class="table table-condensed table-hover table-responsive">
+                                    <caption>{{ category.name }}</caption>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Weight</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for item in list.items.all() %}
+                                        {% if item.category.name == category.name  %}
+                                            <tr>
+                                                <td>{{ item.name }}</td>
+                                                <td>{{ item.type.name }}</td>
+                                                <td>{{ item.weight }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                 {% endfor %}
                 </div>
         {% endif %}
@@ -43,29 +54,39 @@
 
 <div class="col-md-3">
     <div class="row">
-        <h2>Shared Gear</h2>
+        <h4>Shared Gear</h4>
         {% for category in categories %}
-            <table class="table table-condensed table-hover table-responsive">
-                <caption>{{ category.name }}</caption>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Weight</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for item in group.shared_items.all() %}
-                    {% if item.category.name == category.name  %}
-                        <tr>
-                            <td>{{ item.name }}</td>
-                            <td>{{ item.type.name }}</td>
-                            <td>{{ item.weight }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-                </tbody>
-            </table>
+            <div class="well well-sm">
+
+                <h5>
+                    {{ category.name }}
+                    <a href="#toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}" class="btn btn-xs btn-default" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}">
+                        <span class="glyphicon glyphicon-menu-up"></span>
+                    </a>
+                </h5>
+                <div id="toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}" class="collapse in">
+                    <table class="table table-condensed table-hover table-responsive">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Weight</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in group.shared_items.all() %}
+                            {% if item.category.name == category.name  %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.type.name }}</td>
+                                    <td>{{ item.weight }}</td>
+                                </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         {% endfor %}
     </div>
 </div>

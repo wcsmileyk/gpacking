@@ -1,67 +1,82 @@
 {% extends 'user_base.html' %}
 
 {% block user_content %}
-    <a href="#addItem" class="btn btn-md btn-primary" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="collapseExample" id="toggleAdd">Add Item</a>
-    <form action="" class="form collapse" id="addItem" method="post">
-      {% if form.errors %}
-      <div class="alert alert-danger">{{ form.errors }}</div>
-        {% endif %}
-        {{ form.csrf_token }}
-      <div class="form-group">
-        <label for="name" class="col-sm-2 control-label">Item Name</label>
-        <div class="col-sm-10">
-          <input type="text" name="name" class="form-control" id="name">
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="category" class="col-sm-2 control-label">Category</label>
-        <div class="col-sm-10">
-           {{ form.category(class_='form-control') }}
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="type" class="col-sm-2 control-label">Type</label>
-        <div class="col-sm-10">
-            <select name="type" id="type" class="form-control">
+    <a href="#addItem" class="btn btn-md btn-primary" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="addItem">
+        <span class="glyphicon glyphicon-plus" id="toggleAdd"></span>
+    </a>
+    <div class="collapse" id="addItem">
+        <div class="clearfix well well-sm">
+            <form action="" class="form" method="post">
+                {% if form.errors %}
+                    <div class="alert alert-danger">{{ form.errors }}</div>
+                {% endif %}
+                {{ form.csrf_token }}
+                <div class="form-group">
+                    <label for="name" class="col-sm-2 control-label">Item Name</label>
+                    <div class="col-sm-10">
+                        <input type="text" name="name" class="form-control" id="name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="category" class="col-sm-2 control-label">Category</label>
+                    <div class="col-sm-10">
+                        {{ form.category(class_='form-control') }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="type" class="col-sm-2 control-label">Type</label>
+                    <div class="col-sm-10">
+                        <select name="type" id="type" class="form-control">
 
-            </select>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="weight" class="col-sm-2 control-label">Weight(grams)</label>
+                    <div class="col-sm-10">
+                        <input type="number" name="weight" class="form-control" id="weight">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="submit" class="btn btn-default">Add Item</button>
+                    </div>
+                </div>
+            </form>
         </div>
-      </div>
-      <div class="form-group">
-          <label for="weight" class="col-sm-2 control-label">Weight(grams)</label>
-          <div class="col-sm-10">
-              <input type="number" name="weight" class="form-control" id="weight">
-          </div>
-      </div>
-      <div class="form-group">
-        <div class="col-sm-offset-2 col-sm-10">
-          <button type="submit" class="btn btn-default">Add Item</button>
-        </div>
-      </div>
-    </form>
+    </div>
     <div>
         {% for category in categories %}
-            <table class="table table-condensed table-hover">
-                <caption>{{ category.name }}</caption>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Weight</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for item in user.closet.items %}
-                    {% if item.category.name == category.name  %}
-                        <tr>
-                            <td>{{ item.name }}</td>
-                            <td>{{ item.type.name }}</td>
-                            <td>{{ item.weight }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-                </tbody>
-            </table>
+            <div class="well well-sm">
+                <h5>
+                    {{ category.name }}
+                    <a href="#toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}" class="btn btn-xs btn-default" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}">
+                        <span class="glyphicon glyphicon-menu-up"></span>
+                    </a>
+                </h5>
+                <div id="toggleTable{{ category.name|replace('/', '')|replace(' ', '') }}" class="collapse in">
+                <table class="table table-condensed table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Weight</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in user.closet.items %}
+                            {% if item.category.name == category.name  %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.type.name }}</td>
+                                    <td>{{ item.weight }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                        </tbody>
+                </table>
+                </div>
+            </div>
         {% endfor %}
     </div>
 {% endblock %}

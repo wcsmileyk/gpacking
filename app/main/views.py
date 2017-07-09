@@ -145,7 +145,8 @@ def manage_bag(groupname, username):
             user.closet.items.append(item)
             group_list.items.append(item)
             db.session.commit()
-    return render_template('user/manage_bag.html', user=user, form=form, group=group, categories=categories, group_list=group_list)
+    weights = [i.weight for i in group_list.items.all()]
+    return render_template('user/manage_bag.html', user=user, form=form, group=group, categories=categories, group_list=group_list, weights=weights)
 
 
 @main.route('/group/<groupname>/shared')
@@ -160,7 +161,6 @@ def manage_shared(groupname):
     return render_template('user/manage_shared.html', user=user, form=form, group=group, categories=categories)
 
 
-
 # Packing Lists
 @main.route('/packing_lists/<username>', methods=['GET', 'POST'])
 @login_required
@@ -169,6 +169,8 @@ def packing_lists(username):
     form = CreatePackingList()
     form.activity.choices = [(a.id, a.name) for a in Activity.query.order_by('name')]
     form.items.choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    item_choices = [(i.id, i.name) for i in user.closet.items.order_by('cat_id').order_by('type_id').all()]
+    print(form.items)
     if form.validate_on_submit():
         pl = PackingList(
             name=form.name.data,
@@ -181,7 +183,7 @@ def packing_lists(username):
             pl.items.append(Item.query.get(item))
         db.session.commit()
     pls = user.packing_lists
-    return render_template('user/packing_list.html', user=user, packing_lists=pls, form=form)
+    return render_template('user/packing_list.html', user=user, packing_lists=pls, form=form, item_choices=item_choices)
 
 
 @main.route('/update_packing_list/<packing_list>', methods=['GET', 'POST'])
@@ -205,7 +207,8 @@ def update_packing_list(packing_list):
         pl.items.append(item)
         user.closet.items.append(item)
         db.session.commit()
-    return render_template('user/update_packing_list.html', user=user, form=form, pl=pl, categories=categories)
+    weights = [i.weight for i in pl.items.all()]
+    return render_template('user/update_packing_list.html', user=user, form=form, pl=pl, categories=categories, weights=weights)
 
 
 

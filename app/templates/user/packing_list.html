@@ -1,7 +1,5 @@
 {% extends 'user_base.html' %}
-
 {% block user_content %}
-
 <a href="#addItem" class="btn btn-md btn-primary" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="collapseExample" id="toggleAdd">Add Packing List</a>
 <form action="" class="form collapse" id="addItem" method="post">
   {% if form.errors %}
@@ -23,7 +21,11 @@
   <div class="form-group">
     <label for="items" class="col-sm-2 control-label">Pick items from your closet</label>
     <div class="col-sm-10">
-        {{ form.items(class_='form-control') }}
+        <div class="panel panel-default">
+            <div class="panel-body">
+                {{ form.items }}
+            </div>
+        </div>
     </div>
   </div>
   <div class="form-group">
@@ -52,7 +54,5 @@
             {% endfor %}
         </tbody>
     </table>
-
 </div>
-
 {% endblock %}

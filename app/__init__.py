@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import config
 
+
 mail = Mail()
 moment = Moment()
 db = SQLAlchemy()
@@ -33,5 +34,8 @@ def create_app(config_name):
 
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
+
+    from .api_0_1_0 import api as api_0_1_0_blueprint
+    app.register_blueprint(api_0_1_0_blueprint, url_prefix='/api/v0.1.0')
 
     return app

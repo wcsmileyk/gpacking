@@ -188,6 +188,9 @@ class User(UserMixin, db.Model):
                 confirmed=True,
             )
             db.session.add(u)
+            closet = Closet(user_id=u.id)
+            db.session.add(closet)
+            u.closet = closet
             try:
                 db.session.commit()
             except IntegrityError:

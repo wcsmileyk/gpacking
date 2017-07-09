@@ -2,9 +2,6 @@
  * Created by wes.smiley on 6/29/17.
  */
 
-var toggle_add = function() {
-    $('#toggleAdd').toggleClass('hidden');
-};
 
 var get_cats = function() {
     $.getJSON($SCRIPT_ROOT + '/create_opts', {
@@ -18,6 +15,17 @@ var get_cats = function() {
     return false;
 };
 
+$("#toggleAdd").click(function(){
+    $(this).toggleClass('glyphicon glyphicon-plus');
+    $(this).toggleClass('glyphicon glyphicon-chevron-up');
+});
+
+jQuery(function() {
+    $('h5 > a > span').click(function() {
+        $(this).toggleClass('glyphicon glyphicon-menu-up');
+        $(this).toggleClass('glyphicon glyphicon-menu-down');
+    })
+});
+
 $(document).ready(get_cats);
-$("#toggleAdd").click(toggle_add);
 $("#category").change(get_cats);
