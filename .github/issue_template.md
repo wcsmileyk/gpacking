@@ -1,6 +1,1 @@
-
-# Expected Behavior
-
-# Acceptance Criteria
-
-# Definition of Done
+<href src=https://github.com/wcsmileyk/gpacking/issues/new?title=As%20a%20%3Cuser%20role%3E%20I%20want%20to%20%3Cgoal%3E%20so%20that%20%3Cbenefit%3E&body=%23%23%20Expected%20behavior%0A%0A%23%23%20Acceptance%20Criteria%0A%0A%23%23%20Definition%20of%20Done></href>
