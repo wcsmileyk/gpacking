@@ -1,5 +1,5 @@
-## Expected Behavior
+## More details (if applicable)
 
-## Acceptance Criteria
+
 
 ## Definition of Done
